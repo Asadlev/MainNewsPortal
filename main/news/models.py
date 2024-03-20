@@ -2,10 +2,11 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.urls import reverse
 from datetime import datetime
+from django.core.cache import cache
 
 
 class News(models.Model):
-    author = models.CharField(max_length=29, unique=True)
+    author = models.CharField(max_length=29, unique=False)
     title = models.CharField(max_length=29)
     text = models.TextField()
     category = models.ForeignKey(to='Category', on_delete=models.CASCADE)
@@ -16,6 +17,11 @@ class News(models.Model):
 
     def get_absolute_url(self):
         return reverse('news:news_detail', args=[str(self.id)])
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs) # сначала вызываем метод родителя, чтобы объект сохранился
+        cache.delete(f'product-{self.pk}') # затем удаляем его из кэша, чтобы сбросить его
+
 
 
 class Category(models.Model):
